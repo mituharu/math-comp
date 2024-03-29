@@ -1042,12 +1042,13 @@ have s_s (i : 'I_m): s`_i \in <<s>>%VS by rewrite memv_span ?memt_nth.
 have s_Zs a: \sum_(i < m) s`_i *~ a i \in <<s>>%VS.
   by rewrite memv_suml // => i _; rewrite -scaler_int memvZ.
 case s_v: (v \in <<s>>%VS); last by right=> [[a Dv]]; rewrite Dv s_Zs in s_v.
-pose S := \matrix_(i < m, j < _) coord (vbasis <<s>>) j s`_i.
-remember (\rank S) as r eqn:rE; remember (m - r)%N as k eqn:kE.
-have Dm: (m = k + r)%N by rewrite kE rE subnK ?rank_leq_row.
-subst m; pose m := (k + r)%N.
+move SE : (\matrix_(i < m, j < _) coord (vbasis <<s>>) j s`_i) => S.
+move rE : (\rank S) => r; move kE : (m - r)%N => k.
+have Dm: (m = k + r)%N by rewrite -kE -rE subnK ?rank_leq_row.
+move: s s_s s_Zs s_v S SE rE kE; rewrite Dm=> s s_s s_Zs s_v S SE rE kE.
+move=> {Dm m}; pose m := (k + r)%N.
 have [K kerK]: {K : 'M_(k, m) | map_mx intr K == kermx S}%MS.
-  move: (mxrank_ker S); rewrite -rE -kE => krk.
+  move: (mxrank_ker S); rewrite rE kE => krk.
   pose B := row_base (kermx S); pose d := \prod_ij denq (B ij.1 ij.2).
   exists (castmx (krk, erefl m) (map_mx numq (intr d *: B))).
   rewrite map_castmx !eqmx_cast -map_mx_comp map_mx_id_in => [|i j]; last first.
@@ -1070,7 +1071,7 @@ have {K L D defK kerK} [kerGu kerS_sub_Gu]: map_mx intr (usubmx G) *m S = 0 /\
   split; last by rewrite -(eqmxP kerK); apply/submxP; exists Kl.
   suff /row_full_inj: row_full Kl.
     by apply; rewrite mulmx0 mulmxA (sub_kermxP _) // -(eqmxP kerK) defK.
-  rewrite /row_full eqn_leq rank_leq_row /= {1}kE {2}rE -(mxrank_ker S).
+  rewrite /row_full eqn_leq rank_leq_row /= -{1}kE -{2}rE -(mxrank_ker S).
   by rewrite -(eqmxP kerK) defK mxrankM_maxl.
 pose T := map_mx intr (dsubmx G) *m S.
 have defS: map_mx intr (rsubmx (invmx G)) *m T = S.
@@ -1084,15 +1085,15 @@ have uS: row_full S.
   apply/matrixP => j1 j2; rewrite !mxE.
   rewrite -(coord_free _ _ (basis_free (vbasisP _))).
   rewrite -!tnth_nth (coord_span (vbasis_mem (mem_tnth j1 _))) linear_sum.
-  by apply: eq_bigr => i _; rewrite !mxE (tnth_nth 0) !linearZ.
+  by apply: eq_bigr=> /= i _; rewrite -SE !mxE (tnth_nth 0) !linearZ.
 have eqST: (S :=: T)%MS by apply/eqmxP; rewrite -{1}defS !submxMl.
 case Zv: (map_mx denq (vv *m pinvmx T) == const_mx 1); last first.
   right=> [[a Dv]]; case/eqP: Zv; apply/rowP.
   have ->: vv = map_mx intr (\row_i a i) *m S.
     apply/rowP => j; rewrite !mxE Dv linear_sum.
-    by apply: eq_bigr => i _; rewrite -scaler_int linearZ !mxE.
+    by apply: eq_bigr => i _; rewrite -SE -scaler_int linearZ !mxE.
   rewrite -defS -2!mulmxA; have ->: T *m pinvmx T = 1%:M.
-    have uT: row_free T by rewrite /row_free -eqST -rE.
+    have uT: row_free T by rewrite /row_free -eqST rE.
     by apply: (row_free_inj uT); rewrite mul1mx mulmxKpV.
   by move=> i; rewrite mulmx1 -map_mxM 2!mxE denq_int mxE.
 pose b := map_mx numq (vv *m pinvmx T) *m dsubmx G.
@@ -1109,14 +1110,14 @@ have <-: v = \sum_(i < m) s`_i *~ b 0 i.
     by have /eqP/rowP/(_ i)/[!mxE] -> := Zv; rewrite mulr1.
   rewrite (coord_vbasis (s_Zs _)); apply: eq_bigr => j _; congr (_ *: _).
   rewrite linear_sum mxE; apply: eq_bigr => i _.
-  by rewrite -scaler_int linearZ [b]lock !mxE.
+  by rewrite -SE -scaler_int linearZ [b]lock !mxE.
 split.
   rewrite -[LHS]addr0 => /addrI hP; pose c := \row_i h i *m lsubmx (invmx G).
   exists [seq c 0 i | i : 'I_k]; congr (_ + _).
   have/sub_kermxP: map_mx intr (\row_i h i) *m S = 0.
     transitivity (\row_j coord (vbasis <<s>>) j (\sum_(i < m) s`_i *~ h i)).
       apply/rowP => j; rewrite !mxE linear_sum; apply: eq_bigr => i _.
-      by rewrite !mxE -scaler_int linearZ.
+      by rewrite -SE !mxE -scaler_int linearZ.
     by apply/rowP => j; rewrite !mxE -hP linear0.
   case/submx_trans/(_ kerS_sub_Gu)/submxP => c' /[dup].
   move/(congr1 (mulmx^~ (map_mx intr (lsubmx (invmx G))))).
@@ -1132,7 +1133,7 @@ pose h := \row_(j < k) c`_j *m usubmx G.
 transitivity (\sum_j (map_mx intr h *m S) 0 j *: (vbasis <<s>>)`_j).
   by rewrite map_mxM -mulmxA kerGu mulmx0 big1 // => j _; rewrite mxE scale0r.
 rewrite (coord_vbasis (s_Zs _)); apply: eq_bigr => i _; congr (_ *: _).
-rewrite linear_sum mxE; apply: eq_bigr => j _.
+rewrite linear_sum -SE mxE; apply: eq_bigr => j _.
 rewrite -scaler_int linearZ !mxE sum_ffunE; congr (_%:~R * _).
 apply: {i} eq_bigr => i _; rewrite mxE ffunMzE mulrzz mulrC.
 by rewrite (nth_map i) ?size_enum_ord // ffunE nth_ord_enum.
