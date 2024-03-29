@@ -1085,7 +1085,7 @@ have uS: row_full S.
   apply/matrixP => j1 j2; rewrite !mxE.
   rewrite -(coord_free _ _ (basis_free (vbasisP _))).
   rewrite -!tnth_nth (coord_span (vbasis_mem (mem_tnth j1 _))) linear_sum.
-  by apply: eq_bigr=> /= i _; rewrite -SE !mxE (tnth_nth 0) !linearZ.
+  by apply: eq_bigr => /= i _; rewrite -SE !mxE (tnth_nth 0) !linearZ.
 have eqST: (S :=: T)%MS by apply/eqmxP; rewrite -{1}defS !submxMl.
 case Zv: (map_mx denq (vv *m pinvmx T) == const_mx 1); last first.
   right=> [[a Dv]]; case/eqP: Zv; apply/rowP.
