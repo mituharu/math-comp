@@ -1045,7 +1045,7 @@ case s_v: (v \in <<s>>%VS); last by right=> [[a Dv]]; rewrite Dv s_Zs in s_v.
 move SE : (\matrix_(i < m, j < _) coord (vbasis <<s>>) j s`_i) => S.
 move rE : (\rank S) => r; move kE : (m - r)%N => k.
 have Dm: (m = k + r)%N by rewrite -kE -rE subnK ?rank_leq_row.
-move: s s_s s_Zs s_v S SE rE kE; rewrite Dm=> s s_s s_Zs s_v S SE rE kE.
+rewrite Dm in s s_s s_Zs s_v S SE rE kE *.
 move=> {Dm m}; pose m := (k + r)%N.
 have [K kerK]: {K : 'M_(k, m) | map_mx intr K == kermx S}%MS.
   move: (mxrank_ker S); rewrite rE kE => krk.
